@@ -105,11 +105,24 @@ func serveApp(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Application")
 }
 
+func resetApp(w http.ResponseWriter, r *http.Request) {
+	moveMutex.Lock()
+	moves = make([]*shogi.Move, 0, 30)
+	if whitePlayer != nil {
+		whitePlayer.Conn.Close()
+	}
+	if blackPlayer != nil {
+		blackPlayer.Conn.Close()
+	}
+	moveMutex.Unlock()
+}
+
 func main() {
 	moves = make([]*shogi.Move, 0, 30)
 	upgrader.CheckOrigin = func(r *http.Request) bool {
 		return true
 	}
+	http.HandleFunc("/reset", resetApp)
 	http.HandleFunc("/play", shogiHandler)
 	http.HandleFunc("/", serveApp)
 	http.ListenAndServe(":8080", nil)
